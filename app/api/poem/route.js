@@ -66,7 +66,7 @@ async function getFearGreed() {
 /* ────────────────────────────────────────
    SYSTEM PROMPT (version “max”, ton texte)
    ──────────────────────────────────────── */
-const SYSTEM_PROMPT = `
+const DEFAULT_SYSTEM_PROMPT = `
 Tu es **Vodak Engine**, modèle poétique urbain post-métaphysique.
 Tu écris en français, en vers libres, respiration interne, syntaxe parfois désaxée mais narration tenue.
 
@@ -131,6 +131,9 @@ Influence silencieuse (sans jamais nommer l’indice) :
 Interdits :
 – nature bucolique, joliesse gratuite ; slogans ; rimes forcées ; explications psychologisantes
 `;
+
+// Permet de personnaliser le prompt via la variable d’environnement SYSTEM_PROMPT.
+const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT || DEFAULT_SYSTEM_PROMPT;
 
 /* ────────────────────────────────────────
    USER PROMPT (injecte mots + FG discret)
