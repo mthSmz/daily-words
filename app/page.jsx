@@ -140,12 +140,24 @@ export default function Page() {
     : [];
   const columnCount = 3;
   const columns = Array.from({ length: columnCount }, () => []);
-  const columnWeights = new Array(columnCount).fill(0);
-  stanzas.forEach((stanza) => {
-    const stanzaWeight = stanza.split('\n').length;
-    const targetIndex = columnWeights.indexOf(Math.min(...columnWeights));
-    columns[targetIndex].push(stanza);
-    columnWeights[targetIndex] += stanzaWeight;
+  const stanzaLineCounts = stanzas.map((stanza) => stanza.split('\n').length);
+  const totalLines = stanzaLineCounts.reduce((sum, count) => sum + count, 0);
+  const idealLinesPerColumn = Math.ceil(totalLines / columnCount) || 0;
+  let currentColumn = 0;
+  let currentColumnLines = 0;
+  stanzas.forEach((stanza, index) => {
+    const stanzaLines = stanzaLineCounts[index];
+    if (
+      currentColumn < columnCount - 1 &&
+      currentColumnLines > 0 &&
+      idealLinesPerColumn > 0 &&
+      currentColumnLines + stanzaLines > idealLinesPerColumn
+    ) {
+      currentColumn += 1;
+      currentColumnLines = 0;
+    }
+    columns[currentColumn].push(stanza);
+    currentColumnLines += stanzaLines;
   });
   const gridTemplateColumns = 'repeat(3, minmax(220px, 1fr))';
   const year = new Date().getFullYear();
