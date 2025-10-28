@@ -139,12 +139,15 @@ export default function Page() {
         .filter(Boolean)
     : [];
   const columnCount = 3;
-  const perColumn = Math.ceil(stanzas.length / columnCount) || 1;
-  const columns = Array.from({ length: columnCount }, (_, columnIndex) =>
-    stanzas.slice(columnIndex * perColumn, (columnIndex + 1) * perColumn)
-  );
-  const gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
-  const columnOffsets = [0, 48, 96];
+  const columns = Array.from({ length: columnCount }, () => []);
+  const columnWeights = new Array(columnCount).fill(0);
+  stanzas.forEach((stanza) => {
+    const stanzaWeight = stanza.split('\n').length;
+    const targetIndex = columnWeights.indexOf(Math.min(...columnWeights));
+    columns[targetIndex].push(stanza);
+    columnWeights[targetIndex] += stanzaWeight;
+  });
+  const gridTemplateColumns = 'repeat(3, minmax(220px, 1fr))';
   const year = new Date().getFullYear();
 
   return (
@@ -154,27 +157,36 @@ export default function Page() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#0b0b0c',
+        background: 'radial-gradient(circle at top, #141417 0%, #09090a 55%, #050506 100%)',
         color: '#f2f2f3',
-        padding: '4rem 2rem',
+        padding: '4rem 2.5rem',
       }}
     >
       <div
         style={{
-          maxWidth: 960,
+          maxWidth: 1080,
           width: '100%',
-          background: 'rgba(19, 19, 20, 0.85)',
-          border: '1px solid rgba(255, 255, 255, 0.06)',
-          borderRadius: 24,
-          padding: '3rem',
-          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.55)',
-          backdropFilter: 'blur(8px)',
+          background: 'rgba(18, 18, 19, 0.88)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          borderRadius: 28,
+          padding: '3.25rem',
+          boxShadow: '0 32px 90px rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '3rem',
         }}
       >
-        <header style={{ marginBottom: '2.5rem' }}>
+        <header
+          style={{
+            display: 'grid',
+            gap: '1.25rem',
+            textAlign: 'center',
+          }}
+        >
           <h1
             style={{
-              fontSize: 42,
+              fontSize: 44,
               fontWeight: 700,
               letterSpacing: '-0.02em',
               margin: 0,
@@ -184,9 +196,9 @@ export default function Page() {
           </h1>
           <p
             style={{
-              marginTop: '0.75rem',
-              fontSize: 20,
-              opacity: 0.7,
+              fontSize: 19,
+              opacity: 0.72,
+              margin: 0,
             }}
           >
             Source&nbsp;: {sourcesLabel}
@@ -196,19 +208,19 @@ export default function Page() {
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
+                justifyContent: 'center',
                 gap: '0.75rem',
-                marginTop: '1.5rem',
               }}
             >
               {wordsList.map((word) => (
                 <span
                   key={word}
                   style={{
-                    padding: '0.45rem 1.1rem',
+                    padding: '0.5rem 1.2rem',
                     borderRadius: 999,
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    fontSize: 16,
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    fontSize: 15,
                     fontWeight: 500,
                     textTransform: 'lowercase',
                     letterSpacing: '0.02em',
@@ -225,16 +237,16 @@ export default function Page() {
           style={{
             display: 'grid',
             gridTemplateColumns,
-            gap: '2.75rem',
-            alignItems: 'start',
+            gap: '2.5rem',
           }}
         >
           {columns.map((column, columnIndex) => (
             <div
               key={`column-${columnIndex}`}
               style={{
-                width: '100%',
-                marginTop: columnOffsets[columnIndex] || 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem',
               }}
             >
               {column.map((stanza, stanzaIndex) => {
@@ -244,13 +256,9 @@ export default function Page() {
                     key={`stanza-${columnIndex}-${stanzaIndex}`}
                     style={{
                       margin: 0,
-                      marginBottom: '1.4rem',
-                      lineHeight: 1.7,
+                      lineHeight: 1.75,
                       fontSize: 18,
-                      opacity:
-                        columnIndex === 0 && stanzaIndex === 0
-                          ? 0.9
-                          : 0.85,
+                      opacity: 0.88,
                     }}
                   >
                     {lines.map((line, lineIndex) => (
@@ -268,11 +276,10 @@ export default function Page() {
 
         <footer
           style={{
-            marginTop: '3rem',
-            fontSize: 14,
+            fontSize: 13,
             opacity: 0.45,
             textAlign: 'center',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.08em',
             textTransform: 'uppercase',
           }}
         >
