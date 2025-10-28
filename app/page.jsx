@@ -108,76 +108,10 @@ export default async function Page() {
         </div>
 
         {/* Poème */}
-      {/*   <section style={{ marginTop: 28, whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 18 }}>
-        {/*   {poem}*/}
-<p>hier
-on pouvait danser
-ou compter les lumières
-les deux donnaient soif :  
+         <section style={{ marginTop: 28, whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 18 }}>
+          {poem}
 
-aujourd’hui
-le budget devient ostentatoire
-comme un chien-ballon
-qu’on garderait au poignet
-pour impressionner son voisin à l’assemblée
-
-Macron traverse la cage d’escalier
-il renverse trois parapluies
-puis laisse un pourboire
-au concierge
-qui ne lui a rien demandé
-
-Melissa porte un parfum d’aéroport
-elle dit que la Jamaïque
-est un pays qu’on ferme
-à coups de zip et d'ouragan
-
-flash
-musique
-trop tôt
-
-les chiffres rient
-sur le tableau lumineux
-on entend leur haleine
-contre le verre :
-le ministre sourit
-avec la précision d’un néon
-et les caméras lui lèchent le front :
-on ne voyage jamais pour fuir
-on fuit pour voyager :
-
-ensuite
-le plafond s’ouvre
-comme une canette géante
-et les étoiles tombent
-en bruit de monnaie
-le serveur murmure
-que la dette
-va bientôt apprendre à marcher
-Melissa traverse encore 
-mais son nom grésille 
-sur l’étiquette du monde 
-que dans les bars 
-on appelle actualités 
-ou encore
-parfois
-télévision : </br></br>
-
-on applaudit
-on applaudit jusqu’à oublier pourquoi
-et le budget
-gonfle
-gonfle
-gonfle :
-un jour 
-quand ils auront eu notre peau 
-il éclatera 
-et nous comprendrons que c’était notre peau qui faisait le bruit : 
-c'était notre peau 
-notre peau 
-qu'ils voulaient mettre dans le budget.</p>
-
-        {/* </section>*/}
+        </section>
 
         <footer style={{ marginTop: 40, opacity: 0.5, fontSize: 14 }}>
           © {new Date().getFullYear()} — Daily Words (MVP)
