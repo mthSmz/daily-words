@@ -2,48 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
-export default function Page() {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    async function loadPoem() {
-      try {
-        const res = await fetch('/api/poem', { cache: 'no-store' });
-        const json = await res.json();
-        setData(json);
-      } catch (err) {
-        console.error(err);
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadPoem();
-  }, []);
-
-  if (loading) {
-    return (
-      <main
-        style={{
-          minHeight: '100vh',
-          display: 'grid',
-          placeItems: 'center',
-          background: '#0b0b0c',
-          color: '#f2f2f3',
-          padding: '2rem',
-        }}
-      >
-        <p>Chargement…</p>
-      </main>
-    );
-  }
-
-  if (!data || !data.ok) {
-    // Poème de secours à afficher en cas d’erreur de récupération
-    const fallbackPoem = `Météo poétique du 28 octobre
-
-hier
+const FALLBACK_WORDS = ['budget', 'contre', 'ouragan', 'melissa', 'trois'];
+const FALLBACK_SOURCES = 'Titres RSS (Le Monde, FTVI, Le Figaro)';
+const FALLBACK_POEM = `hier
 on pouvait danser
 ou compter les lumières
 les deux donnaient soif :
@@ -110,68 +71,132 @@ c’était notre peau
 notre peau
 qu’ils voulaient mettre dans le budget.`;
 
-    const fallbackWords = ['budget', 'contre', 'ouragan', 'melissa', 'trois'];
-    const fallbackSources = 'Titres RSS (Le Monde, FTVI, Le Figaro)';
-    const fallbackDate = new Date().toLocaleDateString('fr-FR', {
-      dateStyle: 'long',
-      timeZone: 'Europe/Paris',
-    });
-    const fallbackStanzas = fallbackPoem.trim().split('\n\n');
-    const midpoint = Math.ceil(fallbackStanzas.length / 2);
-    const firstColumn = fallbackStanzas.slice(0, midpoint);
-    const secondColumn = fallbackStanzas.slice(midpoint);
-    const year = new Date().getFullYear();
+export default function Page() {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
 
+  useEffect(() => {
+    async function loadPoem() {
+      try {
+        const res = await fetch('/api/poem', { cache: 'no-store' });
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        console.error(err);
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPoem();
+  }, []);
+
+  if (loading) {
     return (
       <main
         style={{
           minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: 'grid',
+          placeItems: 'center',
           background: '#0b0b0c',
           color: '#f2f2f3',
-          padding: '4rem 2rem',
+          padding: '2rem',
         }}
       >
-        <div
-          style={{
-            maxWidth: 960,
-            width: '100%',
-            background: 'rgba(19, 19, 20, 0.85)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            borderRadius: 24,
-            padding: '3rem',
-            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.55)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          <header style={{ marginBottom: '2.5rem' }}>
-            <h1
-              style={{
-                fontSize: 42,
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                margin: 0,
-              }}
-            >
-              Poème du jour
-            </h1>
-            <p
-              style={{
-                marginTop: '0.75rem',
-                fontSize: 20,
-                opacity: 0.7,
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '0.5rem 1rem',
-                alignItems: 'center',
-              }}
-            >
-              <span>{fallbackDate}</span>
-              <span style={{ opacity: 0.4 }}>—</span>
-              <span>Source&nbsp;: {fallbackSources}</span>
-            </p>
+        <p>Chargement…</p>
+      </main>
+    );
+  }
+
+  const now = new Date();
+  const fallbackData = {
+    poem: FALLBACK_POEM,
+    words: FALLBACK_WORDS,
+    sources: FALLBACK_SOURCES,
+    date: now.toISOString(),
+  };
+
+  const resolvedData = data && data.ok ? data : fallbackData;
+  const rawDate = resolvedData.date ? new Date(resolvedData.date) : now;
+  const displayDate = new Intl.DateTimeFormat('fr-FR', {
+    dateStyle: 'long',
+    timeZone: 'Europe/Paris',
+  }).format(rawDate);
+  const pageTitle = `Météo poétique du ${displayDate}`;
+  const sourcesLabel = resolvedData.sources || FALLBACK_SOURCES;
+  const wordsList =
+    Array.isArray(resolvedData.words) && resolvedData.words.length
+      ? resolvedData.words
+      : FALLBACK_WORDS;
+
+  const normalizedPoem = (resolvedData.poem || FALLBACK_POEM)
+    .replace(/\r\n/g, '\n')
+    .trim();
+  const stanzas = normalizedPoem
+    ? normalizedPoem
+        .split(/\n{2,}/)
+        .map((stanza) => stanza.trim())
+        .filter(Boolean)
+    : [];
+  const columnCount = Math.min(3, Math.max(1, Math.ceil(stanzas.length / 4)));
+  const perColumn = Math.ceil(stanzas.length / columnCount) || 1;
+  const columns = Array.from({ length: columnCount }, (_, columnIndex) =>
+    stanzas.slice(columnIndex * perColumn, (columnIndex + 1) * perColumn)
+  );
+  const columnTemplates = {
+    1: 'minmax(0, 3fr)',
+    2: 'minmax(0, 3fr) minmax(0, 2fr)',
+    3: 'minmax(0, 3fr) minmax(0, 2fr) minmax(0, 1.5fr)',
+  };
+  const gridTemplateColumns = columnTemplates[columnCount] || columnTemplates[1];
+  const columnOffsets = [0, 48, 96];
+  const year = new Date().getFullYear();
+
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0b0b0c',
+        color: '#f2f2f3',
+        padding: '4rem 2rem',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 960,
+          width: '100%',
+          background: 'rgba(19, 19, 20, 0.85)',
+          border: '1px solid rgba(255, 255, 255, 0.06)',
+          borderRadius: 24,
+          padding: '3rem',
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.55)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <header style={{ marginBottom: '2.5rem' }}>
+          <h1
+            style={{
+              fontSize: 42,
+              fontWeight: 700,
+              letterSpacing: '-0.02em',
+              margin: 0,
+            }}
+          >
+            {pageTitle}
+          </h1>
+          <p
+            style={{
+              marginTop: '0.75rem',
+              fontSize: 20,
+              opacity: 0.7,
+            }}
+          >
+            Source&nbsp;: {sourcesLabel}
+          </p>
+          {wordsList.length > 0 && (
             <div
               style={{
                 display: 'flex',
@@ -180,7 +205,7 @@ qu’ils voulaient mettre dans le budget.`;
                 marginTop: '1.5rem',
               }}
             >
-              {fallbackWords.map((word) => (
+              {wordsList.map((word) => (
                 <span
                   key={word}
                   style={{
@@ -198,125 +223,65 @@ qu’ils voulaient mettre dans le budget.`;
                 </span>
               ))}
             </div>
-          </header>
+          )}
+        </header>
 
-          <section
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '2.5rem',
-              alignItems: 'center',
-              justifyItems: 'center',
-            }}
-          >
-            <div style={{ width: '100%' }}>
-              {firstColumn.map((stanza, stanzaIndex) => {
-                const lines = stanza.split('\n');
-                return (
-                  <p
-                    key={`left-${stanzaIndex}`}
-                    style={{
-                      margin: 0,
-                      marginBottom: '1.4rem',
-                      lineHeight: 1.7,
-                      fontSize: 18,
-                      opacity: stanzaIndex === 0 ? 0.9 : 0.85,
-                    }}
-                  >
-                    {lines.map((line, lineIndex) => (
-                      <span key={`left-${stanzaIndex}-${lineIndex}`}>
-                        {line}
-                        {lineIndex < lines.length - 1 && <br />}
-                      </span>
-                    ))}
-                  </p>
-                );
-              })}
-            </div>
-            <div style={{ width: '100%', marginTop: '4rem' }}>
-              {secondColumn.map((stanza, stanzaIndex) => {
-                const lines = stanza.split('\n');
-                return (
-                  <p
-                    key={`right-${stanzaIndex}`}
-                    style={{
-                      margin: 0,
-                      marginBottom: '1.4rem',
-                      lineHeight: 1.7,
-                      fontSize: 18,
-                      opacity: 0.85,
-                    }}
-                  >
-                    {lines.map((line, lineIndex) => (
-                      <span key={`right-${stanzaIndex}-${lineIndex}`}>
-                        {line}
-                        {lineIndex < lines.length - 1 && <br />}
-                      </span>
-                    ))}
-                  </p>
-                );
-              })}
-            </div>
-          </section>
-
-          <footer
-            style={{
-              marginTop: '3rem',
-              fontSize: 14,
-              opacity: 0.45,
-              textAlign: 'center',
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-            }}
-          >
-            © {year} — Daily Words
-          </footer>
-        </div>
-      </main>
-    );
-  }
-
-  const today = new Date(data.date).toLocaleDateString('fr-FR', {
-    dateStyle: 'long',
-    timeZone: 'Europe/Paris',
-  });
-
-  return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'grid',
-        placeItems: 'center',
-        background: '#0b0b0c',
-        color: '#f2f2f3',
-        padding: '2rem',
-      }}
-    >
-      <div style={{ maxWidth: 720, width: '100%' }}>
-        <h1 style={{ fontSize: 40, marginBottom: 12, fontWeight: 700 }}>
-          Poème du jour
-        </h1>
-        <p style={{ opacity: 0.65, marginBottom: 16, fontSize: 20 }}>
-          {today} —{' '}
-          <span>
-            Mots d’actualité :{' '}
-            {Array.isArray(data.words) ? data.words.join(', ') : ''}
-          </span>
-        </p>
         <section
           style={{
-            marginTop: 28,
-            whiteSpace: 'pre-wrap',
-            lineHeight: 1.6,
-            fontSize: 18,
+            display: 'grid',
+            gridTemplateColumns,
+            gap: '2.75rem',
+            alignItems: 'start',
           }}
         >
-          {data.poem}
+          {columns.map((column, columnIndex) => (
+            <div
+              key={`column-${columnIndex}`}
+              style={{
+                width: '100%',
+                marginTop: columnOffsets[columnIndex] || 0,
+              }}
+            >
+              {column.map((stanza, stanzaIndex) => {
+                const lines = stanza.split('\n');
+                return (
+                  <p
+                    key={`stanza-${columnIndex}-${stanzaIndex}`}
+                    style={{
+                      margin: 0,
+                      marginBottom: '1.4rem',
+                      lineHeight: 1.7,
+                      fontSize: 18,
+                      opacity:
+                        columnIndex === 0 && stanzaIndex === 0
+                          ? 0.9
+                          : 0.85,
+                    }}
+                  >
+                    {lines.map((line, lineIndex) => (
+                      <span key={`line-${columnIndex}-${stanzaIndex}-${lineIndex}`}>
+                        {line}
+                        {lineIndex < lines.length - 1 && <br />}
+                      </span>
+                    ))}
+                  </p>
+                );
+              })}
+            </div>
+          ))}
         </section>
+
         <footer
-          style={{ marginTop: 40, opacity: 0.5, fontSize: 14 }}
+          style={{
+            marginTop: '3rem',
+            fontSize: 14,
+            opacity: 0.45,
+            textAlign: 'center',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+          }}
         >
-          © {new Date().getFullYear()} — Daily Words
+          © {year} — Daily Words
         </footer>
       </div>
     </main>
