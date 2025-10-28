@@ -108,7 +108,7 @@ export default async function Page() {
         </div>
 
         {/* Poème */}
-        <section style={{ marginTop: 28, whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 18 }}>
+      {/*   <section style={{ marginTop: 28, whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 18 }}>
         {/*   {poem}*/}
 <p>hier
 on pouvait danser
@@ -177,7 +177,7 @@ c'était notre peau
 notre peau 
 qu'ils voulaient mettre dans le budget.</p>
 
-        </section>
+        {/* </section>*/}
 
         <footer style={{ marginTop: 40, opacity: 0.5, fontSize: 14 }}>
           © {new Date().getFullYear()} — Daily Words (MVP)
