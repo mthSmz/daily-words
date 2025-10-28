@@ -138,17 +138,12 @@ export default function Page() {
         .map((stanza) => stanza.trim())
         .filter(Boolean)
     : [];
-  const columnCount = Math.min(3, Math.max(1, Math.ceil(stanzas.length / 4)));
+  const columnCount = 3;
   const perColumn = Math.ceil(stanzas.length / columnCount) || 1;
   const columns = Array.from({ length: columnCount }, (_, columnIndex) =>
     stanzas.slice(columnIndex * perColumn, (columnIndex + 1) * perColumn)
   );
-  const columnTemplates = {
-    1: 'minmax(0, 3fr)',
-    2: 'minmax(0, 3fr) minmax(0, 2fr)',
-    3: 'minmax(0, 3fr) minmax(0, 2fr) minmax(0, 1.5fr)',
-  };
-  const gridTemplateColumns = columnTemplates[columnCount] || columnTemplates[1];
+  const gridTemplateColumns = 'minmax(0, 3fr) minmax(0, 2fr) minmax(0, 1fr)';
   const columnOffsets = [0, 48, 96];
   const year = new Date().getFullYear();
 
