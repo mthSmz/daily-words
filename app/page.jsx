@@ -26,8 +26,9 @@ elle dit que la Jamaïque
 est un pays qu’on ferme
 à coups de zip et d’ouragan
 
-flash
-musique
+flash,
+musique !
+non :
 trop tôt
 
 les chiffres rient
