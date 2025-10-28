@@ -143,7 +143,7 @@ export default function Page() {
   const columns = Array.from({ length: columnCount }, (_, columnIndex) =>
     stanzas.slice(columnIndex * perColumn, (columnIndex + 1) * perColumn)
   );
-  const gridTemplateColumns = 'minmax(0, 3fr) minmax(0, 2fr) minmax(0, 1fr)';
+  const gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
   const columnOffsets = [0, 48, 96];
   const year = new Date().getFullYear();
 
