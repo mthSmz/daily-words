@@ -110,7 +110,7 @@ export default async function Page() {
         {/* Poème */}
         <section style={{ marginTop: 28, whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 18 }}>
         {/*   {poem}*/}
-hier
+<p>hier
 on pouvait danser
 ou compter les lumières
 les deux donnaient soif :  
@@ -175,7 +175,7 @@ il éclatera
 et nous comprendrons que c’était notre peau qui faisait le bruit : 
 c'était notre peau 
 notre peau 
-qu'ils voulaient mettre dans le budget.
+qu'ils voulaient mettre dans le budget.</p>
 
         </section>
 
