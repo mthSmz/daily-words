@@ -1,4 +1,6 @@
 // app/api/poem/route.js
+export const runtime = "nodejs";
+
 import { kv } from "@vercel/kv";
 import { generateLocalPoem } from "@/lib/poem";
 import OpenAI from "openai";
