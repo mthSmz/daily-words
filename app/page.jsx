@@ -205,7 +205,7 @@ export default function Page() {
               margin: 0,
             }}
           >
-          Météo poétique du 28 octobre 2025
+            {pageTitle}
           </h1>
           <p
             style={{
