@@ -6,7 +6,7 @@ import { generateLocalPoem } from "@/lib/poem";
 import OpenAI from "openai";
 
 /* ────────────────────────────────────────
-   Cache jusqu'à 15:00 Europe/Paris
+   Utilitaires
    ──────────────────────────────────────── */
 function parisNow() {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" }));
@@ -17,6 +17,33 @@ function secondsUntilNextPublish() {
   next.setHours(15, 0, 0, 0);
   if (now >= next) next.setDate(next.getDate() + 1);
   return Math.max(1, Math.floor((next - now) / 1000));
+}
+function normalizeWords(input) {
+  let words = input ?? [];
+  if (typeof words === "string") {
+    try {
+      words = JSON.parse(words);
+    } catch {
+      // ex: "shein, ile, oleron" -> split doux
+      words = words.split(/[,\n]/g);
+    }
+  }
+  if (!Array.isArray(words)) words = [];
+  return words
+    .filter((w) => w !== undefined && w !== null)
+    .map((w) => String(w).trim())
+    .filter((w) => w.length > 0);
+}
+function scrubPoem(s) {
+  if (!s) return "";
+  // retire les "undefined"/"null" orphelins et espaces doubles accidentels
+  return String(s)
+    .replace(/\bundefined\b/gi, "")
+    .replace(/\bnull\b/gi, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 /* ────────────────────────────────────────
@@ -53,18 +80,17 @@ async function fetchFearGreedCMC() {
   }
 }
 async function getFearGreed() {
-  // KV cache 1h
   const key = "feargreed:latest";
   let v = await kv.get(key);
   if (!Number.isFinite(Number(v))) {
     v = (await fetchFearGreedAlternative()) ?? (await fetchFearGreedCMC()) ?? 50;
-    await kv.set(key, v, { ex: 60 * 60 });
+    await kv.set(key, v, { ex: 60 * 60 }); // 1h
   }
   return Number(v);
 }
 
 /* ────────────────────────────────────────
-   SYSTEM PROMPT (version “max”, ton texte)
+   SYSTEM PROMPT (version “max”)
    ──────────────────────────────────────── */
 const DEFAULT_SYSTEM_PROMPT = `
 Tu es **Vodak Engine**, modèle poétique urbain post-métaphysique.
@@ -132,11 +158,10 @@ Interdits :
 – nature bucolique, joliesse gratuite ; slogans ; rimes forcées ; explications psychologisantes
 `;
 
-// Permet de personnaliser le prompt via la variable d’environnement SYSTEM_PROMPT.
 const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT || DEFAULT_SYSTEM_PROMPT;
 
 /* ────────────────────────────────────────
-   USER PROMPT (injecte mots + FG discret)
+   USER PROMPT
    ──────────────────────────────────────── */
 function userPrompt(wordsCsv, fg) {
   return `
@@ -163,7 +188,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req) {
   try {
-    // 1) Prend les mots du jour via ton endpoint
+    // 1) Récupère les mots du jour via /api/cron
     const token = process.env.CRON_TOKEN;
     if (!token) {
       return new Response(JSON.stringify({ ok: false, error: "missing_cron_token" }), { status: 500 });
@@ -173,13 +198,19 @@ export async function GET(req) {
     if (!wordsRes.ok) {
       return new Response(JSON.stringify({ ok: false, error: "cron_fetch_failed" }), { status: 500 });
     }
-    const { date, words } = await wordsRes.json();
+    const payload = await wordsRes.json();
+    const date = payload?.date || new Date().toISOString().slice(0, 10);
+    const rawWords = payload?.words ?? [];
+    const safeWords = normalizeWords(rawWords);
+
+    // fallback ultra-basique si jamais vide
+    const words = safeWords.length ? safeWords : ["budget", "contre", "ouragan", "melissa", "trois"];
     const wordsCsv = words.join(", ");
 
-    // 2) Fear/Greed avec KV cache 1h
+    // 2) Fear/Greed (KV cache 1h)
     const fg = await getFearGreed();
 
-    // 3) Génération : OpenAI si clé dispo, sinon fallback local
+    // 3) Génération : OpenAI si possible, sinon local
     let poem = "";
     let source = "local";
 
@@ -189,38 +220,46 @@ export async function GET(req) {
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           temperature: 0.9,
-          max_tokens: 500,
+          max_tokens: 600,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: userPrompt(wordsCsv, fg) },
           ],
         });
-        poem = completion.choices?.[0]?.message?.content?.trim() || "";
+        poem = completion?.choices?.[0]?.message?.content ?? "";
         source = "openai";
-      } catch {
+      } catch (err) {
+        console.error("[poem] OpenAI failed → fallback local:", err?.message || err);
         poem = "";
         source = "local";
       }
     }
 
     if (!poem) {
+      // on passe les words assainis au générateur local
       poem = generateLocalPoem(words, date);
       source = "local";
     }
 
-    // 4) (Option) garde le poème du jour 6h pour debug / historique mou
+    poem = scrubPoem(poem);
+
+    // 4) Garde le poème du jour 6h pour debug / historique
     const todayKey = `poem:${date}`;
     await kv.set(todayKey, poem, { ex: 60 * 60 * 6 });
 
     // 5) Réponse + cache jusqu'à 15h (s-maxage)
     const smax = secondsUntilNextPublish();
-    return new Response(JSON.stringify({ ok: true, date, words, fearGreed: fg, poem, source }), {
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": `public, s-maxage=${smax}`,
-      },
-    });
+    return new Response(
+      JSON.stringify({ ok: true, date, words, fearGreed: fg, poem, source }),
+      {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": `public, s-maxage=${smax}`,
+        },
+      }
+    );
   } catch (e) {
+    console.error("[poem] fatal:", e);
     return new Response(JSON.stringify({ ok: false, error: "poem_generation_failed" }), { status: 500 });
   }
 }
