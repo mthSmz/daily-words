@@ -7,11 +7,11 @@ const FALLBACK_SOURCES = 'Titres RSS (Le Monde, FTVI, Le Figaro)';
 const FALLBACK_POEM = `hier
 on pouvait danser
 ou compter les lumières
-les deux donnaient soif :
+les deux donnaient soif :
 
 aujourd’hui
 le budget devient ostentatoire
-comme un chien‑ballon
+comme un chien-ballon
 qu’on garderait au poignet
 pour impressionner son voisin à l’assemblée
 
@@ -34,12 +34,12 @@ trop tôt
 les chiffres rient
 sur le tableau lumineux
 on entend leur haleine
-contre le verre :
+contre le verre :
 le ministre sourit
 avec la précision d’un néon
-et les caméras lui lèchent le front :
+et les caméras lui lèchent le front :
 on ne voyage jamais pour fuir
-on fuit pour voyager :
+on fuit pour voyager :
 
 ensuite
 le plafond s’ouvre
@@ -56,18 +56,18 @@ que dans les bars
 on appelle actualités
 ou encore
 parfois
-télévision :
+télévision :
 
 on applaudit
 on applaudit jusqu’à oublier pourquoi
 et le budget
 gonfle
 gonfle
-gonfle :
+gonfle :
 un jour
 quand ils auront eu notre peau
 il éclatera
-et nous comprendrons que c’était notre peau qui faisait le bruit :
+et nous comprendrons que c’était notre peau qui faisait le bruit :
 c’était notre peau
 notre peau
 qu’ils voulaient mettre dans le budget.`;
@@ -109,6 +109,14 @@ export default function Page() {
     );
   }
 
+  // --- Helpers
+  const normalize = (str) =>
+    (str || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/[ \t]+\n/g, '\n') // trailing spaces before line breaks
+      .trim();
+
+  // --- Data resolution
   const now = new Date();
   const fallbackData = {
     poem: FALLBACK_POEM,
@@ -118,27 +126,37 @@ export default function Page() {
   };
 
   const resolvedData = data && data.ok ? data : fallbackData;
+
+  // Normalize poem and detect if it's the fallback poem
+  const normalizedPoem = normalize(resolvedData.poem || FALLBACK_POEM);
+  const isFallbackPoem = normalizedPoem === normalize(FALLBACK_POEM);
+
+  // Date & Title
   const rawDate = resolvedData.date ? new Date(resolvedData.date) : now;
   const displayDate = new Intl.DateTimeFormat('fr-FR', {
     dateStyle: 'long',
     timeZone: 'Europe/Paris',
   }).format(rawDate);
-  const pageTitle = `Météo poétique du ${displayDate}`;
+
+  // If the displayed poem is exactly the fallback, force the requested fixed title
+  const pageTitle = isFallbackPoem
+    ? 'Météo poétique du le 28 octobre 2025'
+    : `Météo poétique du ${displayDate}`;
+
   const sourcesLabel = resolvedData.sources || FALLBACK_SOURCES;
   const wordsList =
     Array.isArray(resolvedData.words) && resolvedData.words.length
       ? resolvedData.words
       : FALLBACK_WORDS;
 
-  const normalizedPoem = (resolvedData.poem || FALLBACK_POEM)
-    .replace(/\r\n/g, '\n')
-    .trim();
+  // Build columns from stanzas
   const stanzas = normalizedPoem
     ? normalizedPoem
         .split(/\n{2,}/)
         .map((stanza) => stanza.trim())
         .filter(Boolean)
     : [];
+
   const columnCount = 3;
   const columns = Array.from({ length: columnCount }, () => []);
   const stanzaLineCounts = stanzas.map((stanza) => stanza.split('\n').length);
@@ -146,6 +164,7 @@ export default function Page() {
   const idealLinesPerColumn = Math.ceil(totalLines / columnCount) || 0;
   let currentColumn = 0;
   let currentColumnLines = 0;
+
   stanzas.forEach((stanza, index) => {
     const stanzaLines = stanzaLineCounts[index];
     if (
@@ -160,6 +179,7 @@ export default function Page() {
     columns[currentColumn].push(stanza);
     currentColumnLines += stanzaLines;
   });
+
   const gridTemplateColumns = 'repeat(3, minmax(220px, 1fr))';
   const year = new Date().getFullYear();
 
@@ -170,7 +190,8 @@ export default function Page() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'radial-gradient(circle at top, #141417 0%, #09090a 55%, #050506 100%)',
+        background:
+          'radial-gradient(circle at top, #141417 0%, #09090a 55%, #050506 100%)',
         color: '#f2f2f3',
         padding: '4rem 2.5rem',
       }}
