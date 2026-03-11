@@ -140,7 +140,7 @@ export default function Page() {
 
   // If the displayed poem is exactly the fallback, force the requested fixed title
   const pageTitle = isFallbackPoem
-    ? 'Météo poétique du le 28 octobre 2025'
+    ? 'Météo poétique du 28 octobre 2025'
     : `Météo poétique du ${displayDate}`;
 
   const sourcesLabel = resolvedData.sources || FALLBACK_SOURCES;
