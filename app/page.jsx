@@ -138,10 +138,7 @@ export default function Page() {
     timeZone: 'Europe/Paris',
   }).format(rawDate);
 
-  // If the displayed poem is exactly the fallback, force the requested fixed title
-  const pageTitle = isFallbackPoem
-    ? 'Météo poétique du 28 octobre 2025'
-    : `Météo poétique du ${displayDate}`;
+  const pageTitle = `Météo poétique du ${displayDate}`;
 
   const sourcesLabel = resolvedData.sources || FALLBACK_SOURCES;
   const wordsList =
