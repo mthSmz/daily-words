@@ -3,9 +3,13 @@
   "functions": {
     "app/api/cron/route.js": {
       "maxDuration": 60
+    },
+    "app/api/poem/route.js": {
+      "maxDuration": 60
     }
   },
   "crons": [
-    { "path": "/api/cron", "schedule": "0 13 * * *" }
+    { "path": "/api/cron", "schedule": "0 13 * * *" },
+    { "path": "/api/poem", "schedule": "5 13 * * *" }
   ]
 }
